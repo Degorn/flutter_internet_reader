@@ -4,8 +4,10 @@ import 'package:flutter_internet_reader/models/news.dart';
 import 'package:flutter_internet_reader/notifiers/news_item_notifier.dart';
 import 'package:flutter_internet_reader/pages/web_view_page.dart';
 import 'package:flutter_internet_reader/widgets/expandable_text.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:share/share.dart';
 import 'package:transparent_image/transparent_image.dart';
 
 class NewsItem extends StatelessWidget {
@@ -36,28 +38,43 @@ class NewsItem extends StatelessWidget {
     final newsItemNotifier = Provider.of<NewsItemNotifier>(context);
     final double cardHeight = newsItemNotifier.isExpanded ? 260 : 180;
 
-    return AnimatedContainer(
-      duration: Duration(milliseconds: 200),
-      height: cardHeight,
-      child: Stack(
-        children: <Widget>[
-          Positioned.fill(
-            child: buildBackgroundImage(),
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: buildInfo(cardHeight),
-          ),
-          Align(
-            alignment: Alignment.topRight,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: buildDate(),
+    return Slidable(
+      actionPane: SlidableBehindActionPane(),
+      secondaryActions: buildSlidableActions(context),
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 200),
+        height: cardHeight,
+        child: Stack(
+          children: <Widget>[
+            Positioned.fill(
+              child: buildBackgroundImage(),
             ),
-          ),
-        ],
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: buildInfo(cardHeight),
+            ),
+            Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: buildDate(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  List<Widget> buildSlidableActions(BuildContext context) {
+    return <Widget>[
+      IconSlideAction(
+        caption: 'Share',
+        color: Colors.indigo,
+        icon: Icons.share,
+        onTap: () => Share.share(news.url),
+      )
+    ];
   }
 
   Widget buildBackgroundImage() {

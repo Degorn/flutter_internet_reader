@@ -1,9 +1,9 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_internet_reader/managers/new_list_manager.dart';
 import 'package:flutter_internet_reader/models/news.dart';
 import 'package:flutter_internet_reader/notifiers/news_item_notifier.dart';
-import 'package:flutter_internet_reader/providers/googl_api_provider.dart';
+import 'package:flutter_internet_reader/notifiers/news_list_notifier.dart';
+import 'package:flutter_internet_reader/pages/settings_page.dart';
 import 'package:flutter_internet_reader/widgets/news_item.dart';
 import 'package:provider/provider.dart';
 
@@ -13,27 +13,42 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  NewsListManager newsManager;
+  List<News> news = List<News>();
+
   @override
   Widget build(BuildContext context) {
+    newsManager = NewsListManager(context);
+
     return SafeArea(
       child: Scaffold(
-        body: FutureBuilder(
-          future: getNewsList(),
-          builder: (_, AsyncSnapshot<List<News>> snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              return CustomScrollView(
-                slivers: <Widget>[
-                  buildSliverAppBar(),
-                  buildSliverList(snapshot),
-                ],
-              );
-            } else {
-              return Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-          },
+        body: CustomScrollView(
+          slivers: <Widget>[
+            buildSliverAppBar(),
+            buildNewsList(),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget buildNewsList() {
+    return Selector<NewsListNotifier, bool>(
+      selector: (_, notifier) => notifier.isNewsFresh,
+      builder: (_, notifier, __) => FutureBuilder(
+        future: newsManager.getNewsList(),
+        builder: (_, AsyncSnapshot<List<News>> snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            return buildSliverList(snapshot);
+          } else {
+            return SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 32),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            );
+          }
+        },
       ),
     );
   }
@@ -45,8 +60,16 @@ class _HomePageState extends State<HomePage> {
       title: Text('News'),
       actions: <Widget>[
         IconButton(
+          icon: Icon(Icons.refresh),
+          onPressed: newsManager.refreshNews,
+        ),
+        IconButton(
           icon: Icon(Icons.settings),
-          onPressed: () {},
+          onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SettingsPage(),
+              )),
         ),
       ],
     );
@@ -66,15 +89,5 @@ class _HomePageState extends State<HomePage> {
         childCount: snapshot.data.length,
       ),
     );
-  }
-
-  Future<List<News>> getNewsList() async {
-    final response = await GoogleApiProvider.getNews();
-
-    final Iterable articles = json.decode(response.body)['articles'];
-
-    List<News> news = articles.map((x) => News.fromGoogleNews(x)).toList();
-
-    return news;
   }
 }

@@ -1,17 +1,17 @@
 import 'package:flutter_internet_reader/models/news.dart';
 import 'package:flutter_internet_reader/providers/api_provider.dart';
 
-class GoogleApiProvider extends ApiProvider {
+class NYTimesApiProvider extends ApiProvider {
   final String url;
 
-  GoogleApiProvider(this.url);
+  NYTimesApiProvider(this.url);
 
   @override
   Future<List<News>> getNews() async {
     final response = await fetchNews(url);
 
-    final Iterable articles = response['articles'];
+    final Iterable articles = response['results'];
 
-    return articles.map((x) => News.fromGoogleNews(x)).toList();
+    return articles.map((x) => News.fromNYTimesNews(x)).toList();
   }
 }

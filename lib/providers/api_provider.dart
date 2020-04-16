@@ -1,10 +1,16 @@
 import 'dart:async';
-import 'package:flutter/cupertino.dart';
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:flutter_internet_reader/models/news.dart';
 import 'package:http/http.dart' as http;
 
-class ApiProvider {
+abstract class ApiProvider {
   @protected
-  static Future getNews(String url) {
-    return http.get(url);
+  Future<Map<String, dynamic>> fetchNews(String url) async {
+    var response = await http.get(url);
+
+    return json.decode(response.body);
   }
+
+  Future<List<News>> getNews();
 }
